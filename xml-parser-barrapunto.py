@@ -14,12 +14,13 @@
 from xml.sax.handler import ContentHandler
 from xml.sax import make_parser
 import sys
+import os
 
 class myContentHandler(ContentHandler):
 
     def __init__ (self):
-        self.inItem = False
-        self.inContent = False
+        self.inItem = False #variable booleana que se activara cuando dentro de item.
+        self.inContent = False  #variable booleana que se activara cuando contenido (characters) del elemento nos interese.
         self.theContent = ""
 
     def startElement (self, name, attrs):
@@ -36,13 +37,18 @@ class myContentHandler(ContentHandler):
             self.inItem = False
         elif self.inItem:
             if name == 'title':
-                line = "Title: " + self.theContent + "."
-                # To avoid Unicode trouble
-                print line.encode('utf-8')
+                line = "Title: " + self.theContent.encode("utf-8") + "."    # To avoid Unicode trouble
+                print line
+                self.title = self.theContent.encode("utf-8")
                 self.inContent = False
                 self.theContent = ""
+
             elif name == 'link':
-                print " Link: " + self.theContent + "."
+                line = " Link: " + self.theContent + "."
+                print line
+                self.link = self.theContent.encode("utf-8")
+                pinchable = "<a href='" + self.link + "'>" + self.title + "</a><br>"
+                htmlFile.write(pinchable)
                 self.inContent = False
                 self.theContent = ""
 
@@ -60,13 +66,21 @@ if len(sys.argv)<2:
 
 # Load parser and driver
 
-theParser = make_parser()   #make_parser devuelve un XMLReader object.
-theHandler = myContentHandler() #instancias la clase myContentHandler.
+theParser = make_parser()   #make_parser devuelve un XMLReader object (parseador).
+theHandler = myContentHandler() #instancias la clase myContentHandler (manejador).
 theParser.setContentHandler(theHandler) #al parseador le pasas el manejador.
 
 # Ready, set, go!
 
 xmlFile = open(sys.argv[1],"r") #abre el documento XML en modo lectura, el cual sera pasado como segundo argumento.
-theParser.parse(xmlFile)    #al parseador le pasas el documento XML.
+
+if os.path.exists("barrapunto.html"):
+    htmlFile = open("barrapunto.html", "a")
+else:
+    htmlFile = open("barrapunto.html", "w")
+
+theParser.parse(xmlFile)    #al parseador le pasas el documento XML. En esta linea se ejecuta la accion de parsear.
+
+htmlFile.close()
 
 print "Parse complete"
